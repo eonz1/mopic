@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="kr.co.mopic.mapper.UserMapper">
+
+    <insert id="insertUser" parameterType="UserAddDTO" useGeneratedKeys="true"
+            keyProperty="userId" keyColumn="USER_ID">
+      INSERT INTO USER
+          (NICKNAME, ROLE, PROVIDER, PROVIDER_ID)
+      VALUES (#{nickname}, 'ROLE_USER', #{provider}, #{providerId})
+    </insert>
+
+    <select id="getUserInfo" parameterType="UserLoginDTO" resultType="UserDTO">
+        SELECT
+            USR.USER_ID
+            , USR.NICKNAME
+            , USR.PROVIDER
+            , USR.PROVIDER_ID
+            , GROUP_CONCAT(CD.CODE_NAME SEPARATOR ',') AS STR_TYPES
+        FROM
+            USER        AS USR
+           , USER_TYPE  AS USR_TP
+           , CODE       AS CD
+        WHERE
+            USR.USER_ID = USR_TP.USER_ID
+            AND USR_TP.TYPE_ID = CD.CODE_ID
+        <if test="providerId != null and !providerId.equals('')">
+            AND USR.PROVIDER_ID = #{providerId}
+        </if>
+        <if test="provider != null and !provider.equals('')">
+            AND USR.PROVIDER = #{provider}
+        </if>
+        <if test="nickname != null and !nickname.equals('')">
+            AND USR.NICKNAME = #{nickname}
+        </if>
+        <if test="userId != null and !userId.equals('')">
+            AND USR.USER_ID = #{userId}
+        </if>
+    </select>
+
+    <update id="changeUserNickname" parameterType="UserModifyDTO">
+        UPDATE USER
+        SET
+            NICKNAME = #{nickname}
+            , MODIFIED_DATE = now()
+        WHERE
+            USER_ID = #{userId}
+    </update>
+
+    <delete id="deleteUserTypes" parameterType="long">
+        DELETE FROM USER_TYPE WHERE USER_ID = #{userId}
+    </delete>
+
+    <insert id="insertUserType" parameterType="java.util.List">
+        INSERT INTO
+            USER_TYPE (USER_ID, TYPE_ID)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.type})
+        </foreach>
+    </insert>
+</mapper>
